@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manage Campaign — FundFlow</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="../assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+<script>window.FF_BASE = "../";</script>
+<div id="ff-nav"></div>
+
+<div class="container py-5" id="page">
+  <p class="text-secondary">Loading…</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/nav.js"></script>
+<script>
+  FundFlowApi.requireRole("ORGANIZER");
+  const id = new URLSearchParams(window.location.search).get("id");
+  const pillClass = s => "ff-pill ff-pill-" + s.toLowerCase();
+  const EDITABLE = ["DRAFT", "REJECTED"];
+
+  async function render() {
+    const page = document.getElementById("page");
+    try {
+      const c = await FundFlowApi.get(`/campaigns/${id}`);
+      const editable = EDITABLE.includes(c.status);
+
+      page.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-4">
+          <div>
+            <h1 class="ff-display mb-1">${c.title}</h1>
+            <span class="${pillClass(c.status)}">${c.status}</span>
+          </div>
+          <div>
+            ${editable ? `<button class="btn btn-ff-primary" id="submitBtn">Submit for review</button>` : ""}
+          </div>
+        </div>
+        ${c.reviewNotes ? `<div class="alert alert-light border">Admin notes: ${c.reviewNotes}</div>` : ""}
+
+        <ul class="nav nav-tabs mb-4">
+          <li class="nav-item"><button class="nav-link active" data-tab="details">Details</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="donations">Donations received</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="updates">Post an update</button></li>
+        </ul>
+
+        <div id="tab-details">
+          <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">$${c.currentAmount}</div><div class="ff-stat-label">raised</div></div></div>
+            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.progressPercentage}%</div><div class="ff-stat-label">funded</div></div></div>
+            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.donorCount}</div><div class="ff-stat-label">donors</div></div></div>
+            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.daysRemaining}</div><div class="ff-stat-label">days left</div></div></div>
+          </div>
+
+          ${editable ? editForm(c) : readOnlyDetails(c)}
+        </div>
+
+        <div id="tab-donations" class="d-none"><p class="text-secondary">Loading…</p></div>
+        <div id="tab-updates" class="d-none">
+          <textarea class="form-control mb-2" id="updateText" rows="3" placeholder="Share a progress update with your donors…"></textarea>
+          <button class="btn btn-ff-primary btn-sm" id="postUpdateBtn">Post update</button>
+          <span id="updateStatus" class="text-secondary small ms-2"></span>
+          ${c.status !== "APPROVED" ? '<p class="text-secondary small mt-2">Updates can only be posted once a campaign is approved.</p>' : ""}
+        </div>
+      `;
+
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-tab]").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          ["details", "donations", "updates"].forEach(t =>
+            document.getElementById("tab-" + t).classList.toggle("d-none", t !== btn.dataset.tab));
+          if (btn.dataset.tab === "donations") loadDonations();
+        });
+      });
+
+      if (editable) wireEditForm(c);
+
+      if (document.getElementById("submitBtn")) {
+        document.getElementById("submitBtn").addEventListener("click", async () => {
+          try {
+            await FundFlowApi.post(`/campaigns/${id}/submit`, {});
+            render();
+          } catch (err) { alert(err.message); }
+        });
+      }
+
+      if (c.status === "APPROVED") {
+        document.getElementById("postUpdateBtn").addEventListener("click", async () => {
+          const status = document.getElementById("updateStatus");
+          try {
+            await FundFlowApi.post(`/campaigns/${id}/updates`, { updateText: document.getElementById("updateText").value });
+            status.textContent = "Posted.";
+            document.getElementById("updateText").value = "";
+          } catch (err) {
+            status.textContent = err.message;
+          }
+        });
+      } else {
+        document.getElementById("postUpdateBtn").disabled = true;
+      }
+    } catch (err) {
+      page.innerHTML = `<div class="ff-empty">${err.message}</div>`;
+    }
+  }
+
+  function readOnlyDetails(c) {
+    return `<p style="white-space: pre-line;">${c.description}</p>
+            <p class="text-secondary small">Target: $${c.targetAmount} · ${c.startDate} to ${c.endDate}</p>`;
+  }
+
+  function editForm(c) {
+    return `
+      <div class="row g-3">
+        <div class="col-md-8"><label class="form-label">Title</label><input class="form-control" id="editTitle" value="${c.title}"></div>
+        <div class="col-md-4"><label class="form-label">Category</label><input class="form-control" id="editCategory" value="${c.category || ''}"></div>
+        <div class="col-md-6"><label class="form-label">Target amount</label><input type="number" class="form-control" id="editTarget" value="${c.targetAmount}"></div>
+        <div class="col-md-3"><label class="form-label">Start date</label><input type="date" class="form-control" id="editStart" value="${c.startDate}"></div>
+        <div class="col-md-3"><label class="form-label">End date</label><input type="date" class="form-control" id="editEnd" value="${c.endDate}"></div>
+        <div class="col-md-6"><label class="form-label">Beneficiary</label><input class="form-control" id="editBeneficiary" value="${c.beneficiaryName}"></div>
+        <div class="col-md-6"><label class="form-label">Beneficiary details</label><input class="form-control" id="editBeneficiaryInfo" value="${c.beneficiaryInfo || ''}"></div>
+        <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" id="editDescription" rows="6">${c.description}</textarea></div>
+      </div>
+      <button class="btn btn-ff-primary mt-3" id="saveEditBtn">Save changes</button>
+      <span id="editStatus" class="text-secondary small ms-2"></span>
+    `;
+  }
+
+  function wireEditForm(c) {
+    document.getElementById("saveEditBtn").addEventListener("click", async () => {
+      const status = document.getElementById("editStatus");
+      try {
+        await FundFlowApi.put(`/campaigns/${id}`, {
+          title: document.getElementById("editTitle").value,
+          description: document.getElementById("editDescription").value,
+          category: document.getElementById("editCategory").value,
+          targetAmount: parseFloat(document.getElementById("editTarget").value),
+          startDate: document.getElementById("editStart").value,
+          endDate: document.getElementById("editEnd").value,
+          beneficiaryName: document.getElementById("editBeneficiary").value,
+          beneficiaryInfo: document.getElementById("editBeneficiaryInfo").value,
+        });
+        status.textContent = "Saved.";
+      } catch (err) {
+        status.textContent = err.fieldErrors ? Object.values(err.fieldErrors).join(" ") : err.message;
+      }
+    });
+  }
+
+  async function loadDonations() {
+    const box = document.getElementById("tab-donations");
+    box.innerHTML = '<p class="text-secondary">Loading…</p>';
+    try {
+      const donations = await FundFlowApi.get(`/donations/campaign/${id}`);
+      if (!donations.length) {
+        box.innerHTML = '<div class="ff-empty">No donations yet.</div>';
+        return;
+      }
+      box.innerHTML = `
+        <table class="table ff-card">
+          <thead><tr><th>Amount</th><th>Status</th><th>Reference</th><th>Date</th></tr></thead>
+          <tbody>
+            ${donations.map(d => `
+              <tr>
+                <td>$${d.amount}</td>
+                <td><span class="ff-pill ff-pill-${d.status.toLowerCase()}">${d.status}</span></td>
+                <td class="text-secondary small">${d.transactionRef || "—"}</td>
+                <td class="text-secondary small">${new Date(d.createdAt).toLocaleString()}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      box.innerHTML = `<div class="ff-empty">${err.message}</div>`;
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>

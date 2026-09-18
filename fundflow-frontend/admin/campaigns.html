@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campaign Management — FundFlow</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="../assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+<script>window.FF_BASE = "../";</script>
+<div id="ff-nav"></div>
+
+<div class="container py-5">
+  <h1 class="ff-display mb-4">Campaign management</h1>
+
+  <ul class="nav nav-pills mb-4" id="statusTabs">
+    <li class="nav-item"><button class="nav-link active" data-status="">All</button></li>
+    <li class="nav-item"><button class="nav-link" data-status="PENDING">Pending</button></li>
+    <li class="nav-item"><button class="nav-link" data-status="APPROVED">Approved</button></li>
+    <li class="nav-item"><button class="nav-link" data-status="REJECTED">Rejected</button></li>
+    <li class="nav-item"><button class="nav-link" data-status="BLOCKED">Blocked</button></li>
+    <li class="nav-item"><button class="nav-link" data-status="COMPLETED">Completed</button></li>
+  </ul>
+
+  <div id="list"><p class="text-secondary">Loading…</p></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/nav.js"></script>
+<script>
+  FundFlowApi.requireRole("ADMIN");
+  const pillClass = s => "ff-pill ff-pill-" + s.toLowerCase();
+
+  async function loadList(status) {
+    const list = document.getElementById("list");
+    list.innerHTML = '<p class="text-secondary">Loading…</p>';
+    try {
+      const path = status ? `/campaigns/admin?status=${status}` : "/campaigns/admin";
+      const campaigns = await FundFlowApi.get(path);
+      if (!campaigns.length) {
+        list.innerHTML = '<div class="ff-empty">No campaigns in this view.</div>';
+        return;
+      }
+      list.innerHTML = campaigns.map(c => `
+        <div class="ff-card p-3 mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <a href="../campaign-details.html?id=${c.id}">${c.title}</a>
+              <div class="text-secondary small">${c.category || "General"} · $${c.currentAmount} of $${c.targetAmount}</div>
+            </div>
+            <span class="${pillClass(c.status)}">${c.status}</span>
+          </div>
+          <div class="mt-2" id="actions-${c.id}">
+            ${actionsFor(c)}
+          </div>
+        </div>
+      `).join("");
+
+      campaigns.forEach(c => wireActions(c, status));
+    } catch (err) {
+      list.innerHTML = `<div class="ff-empty">${err.message}</div>`;
+    }
+  }
+
+  function actionsFor(c) {
+    if (c.status === "PENDING") {
+      return `
+        <button class="btn btn-ff-primary btn-sm" data-action="APPROVE" data-id="${c.id}">Approve</button>
+        <button class="btn btn-ff-outline btn-sm" data-action="REJECT" data-id="${c.id}">Reject</button>
+        <button class="btn btn-ff-outline btn-sm text-danger" data-action="BLOCK" data-id="${c.id}">Block</button>
+      `;
+    }
+    if (c.status === "APPROVED") {
+      return `
+        <button class="btn btn-ff-outline btn-sm text-danger" data-action="BLOCK" data-id="${c.id}">Block</button>
+        <button class="btn btn-ff-outline btn-sm" data-action="COMPLETE" data-id="${c.id}">Mark completed</button>
+      `;
+    }
+    return `<span class="text-secondary small">No actions available.</span>`;
+  }
+
+  function wireActions(c, currentStatus) {
+    const box = document.getElementById(`actions-${c.id}`);
+    if (!box) return;
+    box.querySelectorAll("[data-action]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const action = btn.dataset.action;
+        try {
+          if (action === "COMPLETE") {
+            await FundFlowApi.post(`/campaigns/${c.id}/complete`, {});
+          } else {
+            let reviewNotes = "";
+            if (action === "REJECT" || action === "BLOCK") {
+              reviewNotes = prompt(`Reason for ${action.toLowerCase()}ing "${c.title}"?`);
+              if (!reviewNotes) return;
+            }
+            await FundFlowApi.post(`/campaigns/${c.id}/review`, { action, reviewNotes });
+          }
+          loadList(currentStatus);
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll("#statusTabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#statusTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadList(btn.dataset.status);
+    });
+  });
+
+  const focusId = new URLSearchParams(window.location.search).get("focus");
+  if (focusId) {
+    document.querySelector('[data-status="PENDING"]').click();
+  } else {
+    loadList("");
+  }
+</script>
+</body>
+</html>

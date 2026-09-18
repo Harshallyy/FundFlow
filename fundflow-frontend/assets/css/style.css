@@ -1,0 +1,156 @@
+/* ===== FundFlow design tokens =====
+   Color:  brand teal (#0F6E5B, growth/trust) + warm amber (#E8A33D, progress/CTA)
+           warm paper background (#FBF9F5), warm charcoal ink (#1E2321)
+   Type:   Georgia for headlines (editorial, human, non-generic sans-only look),
+           system-ui for body/UI (fast, no external font load)
+   Layout: left-aligned, generous whitespace, thick amber progress bars as the
+           one recurring signature element tying every page together.
+*/
+:root {
+  --ff-brand: #0F6E5B;
+  --ff-brand-dark: #0B5346;
+  --ff-accent: #E8A33D;
+  --ff-accent-dark: #C97F1B;
+  --ff-danger: #C1503F;
+  --ff-ink: #1E2321;
+  --ff-ink-soft: #4B5450;
+  --ff-paper: #FBF9F5;
+  --ff-surface: #FFFFFF;
+  --ff-border: #E4E0D8;
+  --ff-radius: 10px;
+}
+
+body {
+  background: var(--ff-paper);
+  color: var(--ff-ink);
+  font-family: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+  line-height: 1.55;
+}
+
+h1, h2, h3, .ff-display {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ff-ink);
+  letter-spacing: -0.01em;
+}
+
+a { color: var(--ff-brand); text-decoration: none; }
+a:hover { color: var(--ff-brand-dark); text-decoration: underline; }
+
+/* ---- Navbar ---- */
+.ff-navbar {
+  background: var(--ff-surface);
+  border-bottom: 1px solid var(--ff-border);
+}
+.ff-navbar .nav-link { color: var(--ff-ink-soft); font-weight: 500; }
+.ff-navbar .nav-link.active, .ff-navbar .nav-link:hover { color: var(--ff-brand); }
+
+/* ---- Buttons ---- */
+.btn-ff-primary {
+  background: var(--ff-brand);
+  border-color: var(--ff-brand);
+  color: #fff;
+}
+.btn-ff-primary:hover { background: var(--ff-brand-dark); border-color: var(--ff-brand-dark); color: #fff; }
+
+.btn-ff-accent {
+  background: var(--ff-accent);
+  border-color: var(--ff-accent);
+  color: var(--ff-ink);
+  font-weight: 600;
+}
+.btn-ff-accent:hover { background: var(--ff-accent-dark); border-color: var(--ff-accent-dark); color: #fff; }
+
+.btn-ff-outline {
+  background: transparent;
+  border: 1px solid var(--ff-border);
+  color: var(--ff-ink);
+}
+.btn-ff-outline:hover { border-color: var(--ff-brand); color: var(--ff-brand); }
+
+/* ---- Cards ---- */
+.ff-card {
+  background: var(--ff-surface);
+  border: 1px solid var(--ff-border);
+  border-radius: var(--ff-radius);
+  overflow: hidden;
+  transition: border-color .15s ease;
+}
+.ff-card:hover { border-color: var(--ff-brand); }
+.ff-card img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.ff-card .ff-card-body { padding: 1rem 1.1rem 1.2rem; }
+
+/* ---- Signature progress bar (the one bold, recurring element) ---- */
+.ff-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ff-border);
+  overflow: hidden;
+}
+.ff-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ff-accent-dark), var(--ff-accent));
+  border-radius: 999px;
+}
+
+/* ---- Status pills ---- */
+.ff-pill {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.ff-pill-draft   { background: #F1EFE9; color: var(--ff-ink-soft); }
+.ff-pill-pending { background: #FCF1DC; color: #8A5A00; }
+.ff-pill-approved{ background: #E6F3EE; color: var(--ff-brand-dark); }
+.ff-pill-rejected{ background: #FBEAE7; color: var(--ff-danger); }
+.ff-pill-blocked { background: #2A2622; color: #fff; }
+.ff-pill-completed{ background: #E9E6FB; color: #4B3FA8; }
+.ff-pill-success { background: #E6F3EE; color: var(--ff-brand-dark); }
+.ff-pill-failed  { background: #FBEAE7; color: var(--ff-danger); }
+
+/* ---- Stat strip (home page hero numbers - plain, no icon-circle cliche) ---- */
+.ff-stat-strip { border-top: 1px solid var(--ff-border); border-bottom: 1px solid var(--ff-border); }
+.ff-stat-strip .ff-stat + .ff-stat { border-left: 1px solid var(--ff-border); }
+.ff-stat .ff-stat-num { font-family: Georgia, serif; font-size: 2.4rem; color: var(--ff-brand); }
+.ff-stat .ff-stat-label { color: var(--ff-ink-soft); font-size: 0.92rem; }
+
+/* ---- Verification flow (a real sequence, numbering is earned here) ---- */
+.ff-flow-step {
+  border: 1px solid var(--ff-border);
+  border-radius: var(--ff-radius);
+  padding: 1rem;
+  background: var(--ff-surface);
+}
+.ff-flow-step .ff-flow-num {
+  font-family: Georgia, serif;
+  color: var(--ff-brand);
+  font-size: 1.3rem;
+}
+
+/* ---- Notification bell ---- */
+.ff-bell-dot {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ff-danger);
+}
+
+.ff-empty {
+  border: 1px dashed var(--ff-border);
+  border-radius: var(--ff-radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--ff-ink-soft);
+}
+
+footer.ff-footer {
+  border-top: 1px solid var(--ff-border);
+  color: var(--ff-ink-soft);
+  font-size: 0.9rem;
+}

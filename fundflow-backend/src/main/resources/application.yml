@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: fundflow-backend
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
+    username: ${DB_USERNAME:fundflow_user}
+    password: ${DB_PASSWORD:fundflow123}
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.OracleDialect
+
+  sql:
+    init:
+      mode: never
+
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: mistral
+          temperature: 0.6
+
+app-admin:
+  seed-email: ${ADMIN_EMAIL:admin@fundflow.local}
+  seed-password: ${ADMIN_PASSWORD:Admin@12345}
+  seed-full-name: ${ADMIN_NAME:FundFlow Admin}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_AT_LEAST_256_BITS}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+logging:
+  level:
+    com.fundflow: DEBUG
+    org.hibernate.SQL: DEBUG
