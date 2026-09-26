@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /donor/
+Disallow: /organizer/
+Disallow: /payment/
+Disallow: /ai/
+Disallow: /profile.html
+Disallow: /notifications.html
+Disallow: /login.html
+Disallow: /register.html
+
+Sitemap: http://localhost:5500/sitemap.xml

@@ -7,6 +7,7 @@ import com.fundflow.entity.User;
 import com.fundflow.exception.InvalidCampaignStateException;
 import com.fundflow.exception.ResourceNotFoundException;
 import com.fundflow.exception.UnauthorizedActionException;
+import com.fundflow.notification.ResendEmailService;
 import com.fundflow.repository.CampaignRepository;
 import com.fundflow.repository.DonationRepository;
 import com.fundflow.repository.UserRepository;
@@ -34,6 +35,7 @@ public class CampaignServiceImpl implements CampaignService {
     private final DonationRepository donationRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ResendEmailService resendEmailService;
 
     @Override
     @Transactional
@@ -98,6 +100,7 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setStatus(CampaignStatus.PENDING);
         campaign.setReviewNotes(null);
         campaign = campaignRepository.save(campaign);
+        Campaign submittedCampaign = campaign;
 
         notificationService.notify(organizer,
                 "Your campaign \"" + campaign.getTitle() + "\" was submitted and is awaiting admin review.",
@@ -105,9 +108,12 @@ public class CampaignServiceImpl implements CampaignService {
 
         String campaignTitle = campaign.getTitle();
 
-        userRepository.findByRole_Name("ROLE_ADMIN").forEach(admin -> notificationService.notify(admin,
-                "New campaign \"" + campaignTitle + "\" is pending review.",
-                "CAMPAIGN_PENDING_REVIEW"));
+        userRepository.findByRole_Name("ROLE_ADMIN").forEach(admin -> {
+            notificationService.notify(admin,
+                    "New campaign \"" + campaignTitle + "\" is pending review.",
+                    "CAMPAIGN_PENDING_REVIEW");
+            resendEmailService.sendCampaignPendingReviewEmail(admin, submittedCampaign);
+        });
 
         return toDetailResponse(campaign);
     }

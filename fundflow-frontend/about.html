@@ -1,62 +1,105 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How FundFlow Works</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<script>window.FF_BASE = "";</script>
-<div id="ff-nav"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How FundFlow Works</title>
+    <meta
+      name="description"
+      content="Learn how FundFlow reviews campaigns, supports donors, and helps organizers raise funds."
+    />
+    <link rel="canonical" href="./" />
+    <meta property="og:title" content="How FundFlow Works" />
+    <meta
+      property="og:description"
+      content="Learn how campaign review and donations work on FundFlow."
+    />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="assets/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <script>
+      window.FF_BASE = "";
+    </script>
+    <div id="ff-nav"></div>
 
-<div class="container py-5">
-  <h1 class="ff-display mb-4">How FundFlow works</h1>
-  <p class="fs-5 text-secondary" style="max-width: 60ch;">
-    FundFlow reviews every campaign before donors ever see it. Here's the path a campaign takes,
-    and how donating actually works underneath.
-  </p>
+    <div class="container py-5">
+      <h1 class="ff-display mb-4">How FundFlow works</h1>
+      <p class="fs-5 text-secondary" style="max-width: 60ch">
+        FundFlow reviews every campaign before donors ever see it. Here's the
+        path a campaign takes, and how donating actually works underneath.
+      </p>
 
-  <h4 class="mt-5 mb-3">Campaign verification</h4>
-  <div class="row g-3">
-    <div class="col-6 col-md">
-      <div class="ff-flow-step h-100"><div class="ff-flow-num">1</div><strong>Draft</strong><p class="small text-secondary mb-0">Organizer writes up the campaign.</p></div>
+      <h4 class="mt-5 mb-3">Campaign verification</h4>
+      <div class="row g-3">
+        <div class="col-6 col-md">
+          <div class="ff-flow-step h-100">
+            <div class="ff-flow-num">1</div>
+            <strong>Draft</strong>
+            <p class="small text-secondary mb-0">
+              Organizer writes up the campaign.
+            </p>
+          </div>
+        </div>
+        <div class="col-6 col-md">
+          <div class="ff-flow-step h-100">
+            <div class="ff-flow-num">2</div>
+            <strong>Pending</strong>
+            <p class="small text-secondary mb-0">Submitted for admin review.</p>
+          </div>
+        </div>
+        <div class="col-6 col-md">
+          <div class="ff-flow-step h-100">
+            <div class="ff-flow-num">3</div>
+            <strong>Approved</strong>
+            <p class="small text-secondary mb-0">Live and visible to donors.</p>
+          </div>
+        </div>
+        <div class="col-6 col-md">
+          <div class="ff-flow-step h-100">
+            <div class="ff-flow-num">—</div>
+            <strong>Rejected / Blocked</strong>
+            <p class="small text-secondary mb-0">
+              Sent back with admin notes, or removed if suspicious.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="mt-5 mb-3">Donating</h4>
+      <p style="max-width: 60ch">
+        This is a demo project, so payments run through a mock payment flow — no
+        real money moves. You pick an amount and a mock payment method, and the
+        system returns Success, Failed, or Pending, the same way a real gateway
+        would. Every attempt is recorded as a transaction so you can see exactly
+        what happened.
+      </p>
+
+      <h4 class="mt-5 mb-3">Notifications</h4>
+      <p style="max-width: 60ch">
+        Every account has an in-app notification bell — donation results,
+        campaign approvals, new donations received, and more, all inside
+        FundFlow. No email or SMS.
+      </p>
+
+      <a href="ai/assistant.html" class="btn btn-ff-outline mt-3"
+        >Ask the help assistant instead</a
+      >
     </div>
-    <div class="col-6 col-md">
-      <div class="ff-flow-step h-100"><div class="ff-flow-num">2</div><strong>Pending</strong><p class="small text-secondary mb-0">Submitted for admin review.</p></div>
-    </div>
-    <div class="col-6 col-md">
-      <div class="ff-flow-step h-100"><div class="ff-flow-num">3</div><strong>Approved</strong><p class="small text-secondary mb-0">Live and visible to donors.</p></div>
-    </div>
-    <div class="col-6 col-md">
-      <div class="ff-flow-step h-100"><div class="ff-flow-num">—</div><strong>Rejected / Blocked</strong><p class="small text-secondary mb-0">Sent back with admin notes, or removed if suspicious.</p></div>
-    </div>
-  </div>
 
-  <h4 class="mt-5 mb-3">Donating</h4>
-  <p style="max-width: 60ch;">
-    This is a demo project, so payments run through a mock payment flow — no real money moves.
-    You pick an amount and a mock payment method, and the system returns Success, Failed, or
-    Pending, the same way a real gateway would. Every attempt is recorded as a transaction so you
-    can see exactly what happened.
-  </p>
+    <footer class="ff-footer py-4">
+      <div class="container">
+        FundFlow — a student fundraising platform project
+      </div>
+    </footer>
 
-  <h4 class="mt-5 mb-3">Notifications</h4>
-  <p style="max-width: 60ch;">
-    Every account has an in-app notification bell — donation results, campaign approvals, new
-    donations received, and more, all inside FundFlow. No email or SMS.
-  </p>
-
-  <a href="ai/assistant.html" class="btn btn-ff-outline mt-3">Ask the help assistant instead</a>
-</div>
-
-<footer class="ff-footer py-4">
-  <div class="container">FundFlow — a student fundraising platform project</div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="assets/js/api.js"></script>
-<script src="assets/js/nav.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/nav.js"></script>
+  </body>
 </html>

@@ -1,53 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Organizer Dashboard — FundFlow</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="../assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<script>window.FF_BASE = "../";</script>
-<div id="ff-nav"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Organizer Dashboard — FundFlow</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="../assets/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <script>
+      window.FF_BASE = "../";
+    </script>
+    <div id="ff-nav"></div>
 
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="ff-display mb-0">Your dashboard</h1>
-    <a href="create-campaign.html" class="btn btn-ff-accent">+ New campaign</a>
-  </div>
-  <div id="stats" class="row g-3 mb-5"><p class="text-secondary">Loading…</p></div>
+    <div class="container py-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="ff-display mb-0">Your dashboard</h1>
+        <a href="create-campaign.html" class="btn btn-ff-accent"
+          >+ New campaign</a
+        >
+      </div>
+      <div id="stats" class="row g-3 mb-5">
+        <p class="text-secondary">Loading…</p>
+      </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Your campaigns</h4>
-    <a href="campaigns.html">View all</a>
-  </div>
-  <div id="campaignList"><p class="text-secondary">Loading…</p></div>
-</div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Your campaigns</h4>
+        <a href="campaigns.html">View all</a>
+      </div>
+      <div id="campaignList"><p class="text-secondary">Loading…</p></div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/api.js"></script>
-<script src="../assets/js/nav.js"></script>
-<script>
-  FundFlowApi.requireRole("ORGANIZER");
-  const pillClass = s => "ff-pill ff-pill-" + s.toLowerCase();
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/nav.js"></script>
+    <script>
+      FundFlowApi.requireRole("ORGANIZER");
+      const pillClass = (s) => "ff-pill ff-pill-" + s.toLowerCase();
 
-  (async function () {
-    try {
-      const stats = await FundFlowApi.get("/organizer/stats");
-      document.getElementById("stats").innerHTML = `
+      (async function () {
+        try {
+          const stats = await FundFlowApi.get("/organizer/stats");
+          document.getElementById("stats").innerHTML = `
         <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num">$${stats.totalRaised}</div><div class="ff-stat-label">total raised</div></div></div>
         <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${stats.totalDonors}</div><div class="ff-stat-label">total donors</div></div></div>
         <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${stats.donationCount}</div><div class="ff-stat-label">donations</div></div></div>
         <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${stats.campaignCount}</div><div class="ff-stat-label">campaigns</div></div></div>
       `;
 
-      const campaigns = await FundFlowApi.get("/campaigns/mine");
-      const list = document.getElementById("campaignList");
-      if (!campaigns.length) {
-        list.innerHTML = '<div class="ff-empty">You haven\'t created a campaign yet. <a href="create-campaign.html">Start one</a></div>';
-      } else {
-        list.innerHTML = campaigns.slice(0, 5).map(c => `
+          const campaigns = await FundFlowApi.get("/campaigns/mine");
+          const list = document.getElementById("campaignList");
+          if (!campaigns.length) {
+            list.innerHTML =
+              '<div class="ff-empty">You haven\'t created a campaign yet. <a href="create-campaign.html">Start one</a></div>';
+          } else {
+            list.innerHTML = campaigns
+              .slice(0, 5)
+              .map(
+                (c) => `
           <div class="ff-card p-3 mb-2 d-flex justify-content-between align-items-center">
             <div>
               <a href="campaign-manage.html?id=${c.id}">${c.title}</a>
@@ -55,12 +69,15 @@
             </div>
             <span class="${pillClass(c.status)}">${c.status}</span>
           </div>
-        `).join("");
-      }
-    } catch (err) {
-      document.getElementById("stats").innerHTML = `<div class="col-12"><div class="ff-empty">${err.message}</div></div>`;
-    }
-  })();
-</script>
-</body>
+        `,
+              )
+              .join("");
+          }
+        } catch (err) {
+          document.getElementById("stats").innerHTML =
+            `<div class="col-12"><div class="ff-empty">${err.message}</div></div>`;
+        }
+      })();
+    </script>
+  </body>
 </html>

@@ -13,7 +13,7 @@ frontend, running entirely on localhost.
   campaign total updated → in-app notifications. No real money moves; architecture keeps a
   clean `PaymentService` interface so a real gateway (e.g. Razorpay) can be added later
   without touching the rest of the app.
-- **In-app notifications** for donors, organizers, and admins (no email/SMS)
+- **In-app notifications** for donors, organizers, and admins, plus an optional Resend email to admins when a campaign is submitted
 - **Two AI features** (Spring AI + local Ollama model, no paid API):
   - AI campaign description generator (organizer-only, never auto-publishes)
   - FundFlow help assistant (answers "how do I donate", "what does approval mean", etc.)
@@ -22,14 +22,14 @@ frontend, running entirely on localhost.
 
 ## Tech stack
 
-| Layer      | Technology |
-|------------|------------|
-| Backend    | Java 21, Spring Boot 3.3.4, Spring Security, JWT (jjwt), Spring Data JPA/Hibernate |
-| Database   | Oracle XE |
-| AI         | Spring AI + Ollama (local model, e.g. Mistral) |
-| Frontend   | HTML, CSS, JavaScript, Bootstrap 5 (via CDN) |
-| Build      | Maven |
-| Payments   | Mock only (`MockPaymentService`) — no Razorpay yet |
+| Layer    | Technology                                                                         |
+| -------- | ---------------------------------------------------------------------------------- |
+| Backend  | Java 21, Spring Boot 3.3.4, Spring Security, JWT (jjwt), Spring Data JPA/Hibernate |
+| Database | Oracle XE                                                                          |
+| AI       | Spring AI + Ollama (local model, e.g. Mistral)                                     |
+| Frontend | HTML, CSS, JavaScript, Bootstrap 5 (via CDN)                                       |
+| Build    | Maven                                                                              |
+| Payments | Mock only (`MockPaymentService`) — no Razorpay yet                                 |
 
 ## Project structure
 
@@ -72,12 +72,14 @@ fundflow-frontend/
 ## Setup
 
 ### 1. Prerequisites
+
 - JDK 21
 - Maven (or use the included setup once you have Java — Maven Wrapper isn't included, install Maven separately)
 - Oracle Database XE (any recent version with pluggable DB support)
 - [Ollama](https://ollama.com) installed locally, for the AI features
 
 ### 2. Oracle setup
+
 1. Install Oracle XE and make sure it's running on `localhost:1521` (default).
 2. Create a dedicated schema/user for the app, e.g.:
    ```sql
@@ -90,6 +92,7 @@ fundflow-frontend/
 4. Update `application.yml`'s datasource URL if your service name isn't `XEPDB1`.
 
 ### 3. Ollama + Mistral setup
+
 1. Install Ollama: https://ollama.com/download
 2. Pull the model:
    ```
@@ -102,6 +105,7 @@ fundflow-frontend/
    without it.
 
 ### 4. Backend
+
 ```bash
 cd fundflow-backend
 
@@ -111,11 +115,24 @@ export DB_PASSWORD=your_password
 export JWT_SECRET=some-long-random-string-at-least-32-chars
 export ADMIN_EMAIL=admin@fundflow.local
 export ADMIN_PASSWORD=Admin@12345
+export RESEND_API_KEY=re_...
+export RESEND_FROM_EMAIL="FundFlow <no-reply@your-verified-domain.example>"
+export APP_DEMO_ENABLED=true
 
 mvn spring-boot:run
 ```
+
 The API starts on `http://localhost:8080`. On first startup, `DataSeeder` automatically
 creates the admin account above (only if no admin exists yet — safe to leave running).
+
+`RESEND_API_KEY` and `RESEND_FROM_EMAIL` are optional for local development. When both are
+set, Resend sends a simple campaign-review email to every existing `ROLE_ADMIN` user after
+submission. Email failures are logged and never roll back the campaign or in-app notification.
+
+When `APP_DEMO_ENABLED=true` and no approved campaigns exist, startup seeds four clearly
+identified local demo campaigns and a `demo.organizer@fundflow.local` organizer account
+(password `Demo@12345`). Set `APP_DEMO_ENABLED=false` to disable this seeding. Existing
+campaign data is never replaced or reset.
 
 **Note on Spring AI dependency:** this project uses `spring-ai-bom`/`spring-ai-starter-model-ollama`
 version `1.0.0`. I couldn't verify this exact coordinate against Maven Central from the
@@ -124,46 +141,52 @@ https://mvnrepository.com/artifact/org.springframework.ai for the current artifa
 latest version, and update the `spring-ai.version` property and/or artifact id in `pom.xml`.
 
 ### 5. Frontend
+
 No build step — it's static HTML/CSS/JS. Just serve the folder so relative paths and CORS
 work correctly (opening the file directly via `file://` will break API calls):
+
 ```bash
 cd fundflow-frontend
 python3 -m http.server 5500
 ```
+
 Then open `http://localhost:5500`. (Any static server works — VS Code's Live Server
 extension, `npx serve`, etc.)
 
+For a different backend host, set `window.FF_API_BASE` before loading `assets/js/api.js`.
+The default remains `http://localhost:8080/api` for local development.
+
 ## Test credentials
 
-| Role      | Email                  | Password       | How to get it |
-|-----------|------------------------|----------------|----------------|
-| Admin     | `admin@fundflow.local` | `Admin@12345`  | Auto-created on first backend startup (or whatever you set `ADMIN_EMAIL`/`ADMIN_PASSWORD` to) |
-| Donor     | *(your choice)*        | *(your choice)*| Register via the UI, choose "Donate to campaigns" |
-| Organizer | *(your choice)*        | *(your choice)*| Register via the UI, choose "Start a campaign" |
+| Role      | Email                  | Password        | How to get it                                                                                 |
+| --------- | ---------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| Admin     | `admin@fundflow.local` | `Admin@12345`   | Auto-created on first backend startup (or whatever you set `ADMIN_EMAIL`/`ADMIN_PASSWORD` to) |
+| Donor     | _(your choice)_        | _(your choice)_ | Register via the UI, choose "Donate to campaigns"                                             |
+| Organizer | _(your choice)_        | _(your choice)_ | Register via the UI, choose "Start a campaign"                                                |
 
 ## Main API endpoints
 
-| Method | Path | Access |
-|--------|------|--------|
-| POST | `/api/auth/register` | Public |
-| POST | `/api/auth/login` | Public |
-| GET  | `/api/campaigns/explore` | Public |
-| GET  | `/api/campaigns/{id}` | Public (non-approved only visible to owner/admin) |
-| POST | `/api/campaigns` | Organizer |
-| PUT  | `/api/campaigns/{id}` | Organizer (own, DRAFT/REJECTED only) |
-| POST | `/api/campaigns/{id}/submit` | Organizer |
-| POST | `/api/campaigns/{id}/review` | Admin (APPROVE/REJECT/BLOCK) |
-| POST | `/api/campaigns/{id}/complete` | Admin |
-| GET  | `/api/campaigns/mine` | Organizer |
-| GET  | `/api/campaigns/admin` / `/admin/pending` | Admin |
-| POST | `/api/donations` | Donor |
-| GET  | `/api/donations/my` / `/stats` | Donor |
-| GET  | `/api/donations/campaign/{id}` | Organizer (own) / Admin |
-| GET  | `/api/admin/users` / `/stats` / `/donations` | Admin |
-| GET/POST/DELETE | `/api/saved-campaigns` | Donor |
-| GET/PUT | `/api/notifications` | Any authenticated user |
-| POST | `/api/ai/generate-description` | Organizer |
-| POST | `/api/ai/assistant` | Public |
+| Method          | Path                                         | Access                                            |
+| --------------- | -------------------------------------------- | ------------------------------------------------- |
+| POST            | `/api/auth/register`                         | Public                                            |
+| POST            | `/api/auth/login`                            | Public                                            |
+| GET             | `/api/campaigns/explore`                     | Public                                            |
+| GET             | `/api/campaigns/{id}`                        | Public (non-approved only visible to owner/admin) |
+| POST            | `/api/campaigns`                             | Organizer                                         |
+| PUT             | `/api/campaigns/{id}`                        | Organizer (own, DRAFT/REJECTED only)              |
+| POST            | `/api/campaigns/{id}/submit`                 | Organizer                                         |
+| POST            | `/api/campaigns/{id}/review`                 | Admin (APPROVE/REJECT/BLOCK)                      |
+| POST            | `/api/campaigns/{id}/complete`               | Admin                                             |
+| GET             | `/api/campaigns/mine`                        | Organizer                                         |
+| GET             | `/api/campaigns/admin` / `/admin/pending`    | Admin                                             |
+| POST            | `/api/donations`                             | Donor                                             |
+| GET             | `/api/donations/my` / `/stats`               | Donor                                             |
+| GET             | `/api/donations/campaign/{id}`               | Organizer (own) / Admin                           |
+| GET             | `/api/admin/users` / `/stats` / `/donations` | Admin                                             |
+| GET/POST/DELETE | `/api/saved-campaigns`                       | Donor                                             |
+| GET/PUT         | `/api/notifications`                         | Any authenticated user                            |
+| POST            | `/api/ai/generate-description`               | Organizer                                         |
+| POST            | `/api/ai/assistant`                          | Public                                            |
 
 ## Known issues / limitations
 

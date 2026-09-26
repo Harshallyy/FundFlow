@@ -3,6 +3,7 @@ package com.fundflow.service;
 import com.fundflow.dto.campaign.CampaignReviewRequest;
 import com.fundflow.entity.*;
 import com.fundflow.exception.InvalidCampaignStateException;
+import com.fundflow.notification.ResendEmailService;
 import com.fundflow.repository.CampaignRepository;
 import com.fundflow.repository.DonationRepository;
 import com.fundflow.repository.UserRepository;
@@ -27,10 +28,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CampaignServiceImplTest {
 
-    @Mock private CampaignRepository campaignRepository;
-    @Mock private DonationRepository donationRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private NotificationService notificationService;
+    @Mock
+    private CampaignRepository campaignRepository;
+    @Mock
+    private DonationRepository donationRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private ResendEmailService resendEmailService;
 
     @InjectMocks
     private CampaignServiceImpl campaignService;
@@ -112,7 +119,8 @@ class CampaignServiceImplTest {
     @Test
     void updateDraft_byNonOwner_throwsUnauthorized() {
         Role otherOrgRole = Role.builder().id(2L).name("ROLE_ORGANIZER").build();
-        User someoneElse = User.builder().id(999L).fullName("Not The Owner").email("other@test.com").role(otherOrgRole).build();
+        User someoneElse = User.builder().id(999L).fullName("Not The Owner").email("other@test.com").role(otherOrgRole)
+                .build();
 
         when(campaignRepository.findById(10L)).thenReturn(Optional.of(campaign));
 

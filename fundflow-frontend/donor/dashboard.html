@@ -1,47 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Donor Dashboard — FundFlow</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="../assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<script>window.FF_BASE = "../";</script>
-<div id="ff-nav"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Donor Dashboard — FundFlow</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="../assets/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <script>
+      window.FF_BASE = "../";
+    </script>
+    <div id="ff-nav"></div>
 
-<div class="container py-5">
-  <h1 class="ff-display mb-4">Your dashboard</h1>
-  <div id="stats" class="row g-3 mb-5"></div>
+    <div class="container py-5">
+      <h1 class="ff-display mb-4">Your dashboard</h1>
+      <div id="stats" class="row g-3 mb-5"></div>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Recent donations</h4>
-    <a href="donations.html">View all</a>
-  </div>
-  <div id="recent"><p class="text-secondary">Loading…</p></div>
-</div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Recent donations</h4>
+        <a href="donations.html">View all</a>
+      </div>
+      <div id="recent"><p class="text-secondary">Loading…</p></div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/api.js"></script>
-<script src="../assets/js/nav.js"></script>
-<script>
-  FundFlowApi.requireRole("DONOR");
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/nav.js"></script>
+    <script>
+      FundFlowApi.requireRole("DONOR");
 
-  (async function () {
-    try {
-      const stats = await FundFlowApi.get("/donations/stats");
-      document.getElementById("stats").innerHTML = `
+      (async function () {
+        try {
+          const stats = await FundFlowApi.get("/donations/stats");
+          document.getElementById("stats").innerHTML = `
         <div class="col-md-4"><div class="ff-card p-3 text-center"><div class="ff-stat-num">$${stats.totalDonated}</div><div class="ff-stat-label">total donated</div></div></div>
         <div class="col-md-4"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${stats.donationCount}</div><div class="ff-stat-label">successful donations</div></div></div>
         <div class="col-md-4"><div class="ff-card p-3 text-center"><a class="ff-stat-num d-block" href="../explore.html">Give →</a><div class="ff-stat-label">find a new campaign</div></div></div>
       `;
 
-      const recent = document.getElementById("recent");
-      if (!stats.recentDonations.length) {
-        recent.innerHTML = '<div class="ff-empty">You haven\'t donated yet. <a href="../explore.html">Explore campaigns</a></div>';
-      } else {
-        recent.innerHTML = stats.recentDonations.map(d => `
+          const recent = document.getElementById("recent");
+          if (!stats.recentDonations.length) {
+            recent.innerHTML =
+              '<div class="ff-empty">You haven\'t donated yet. <a href="../explore.html">Explore campaigns</a></div>';
+          } else {
+            recent.innerHTML = stats.recentDonations
+              .map(
+                (d) => `
           <div class="ff-card p-3 mb-2 d-flex justify-content-between">
             <div>
               <a href="../campaign-details.html?id=${d.campaignId}">${d.campaignTitle}</a>
@@ -52,12 +61,15 @@
               <span class="ff-pill ff-pill-${d.status.toLowerCase()}">${d.status}</span>
             </div>
           </div>
-        `).join("");
-      }
-    } catch (err) {
-      document.getElementById("stats").innerHTML = `<div class="col-12"><div class="ff-empty">${err.message}</div></div>`;
-    }
-  })();
-</script>
-</body>
+        `,
+              )
+              .join("");
+          }
+        } catch (err) {
+          document.getElementById("stats").innerHTML =
+            `<div class="col-12"><div class="ff-empty">${err.message}</div></div>`;
+        }
+      })();
+    </script>
+  </body>
 </html>

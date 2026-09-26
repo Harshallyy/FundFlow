@@ -1,36 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Donate — FundFlow</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="../assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<script>window.FF_BASE = "../";</script>
-<div id="ff-nav"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Donate — FundFlow</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="../assets/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <script>
+      window.FF_BASE = "../";
+    </script>
+    <div id="ff-nav"></div>
 
-<div class="container py-5" style="max-width: 520px;" id="page">
-  <p class="text-secondary">Loading…</p>
-</div>
+    <div class="container py-5" style="max-width: 520px" id="page">
+      <p class="text-secondary">Loading…</p>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/api.js"></script>
-<script src="../assets/js/nav.js"></script>
-<script>
-  FundFlowApi.requireRole("DONOR");
-  const campaignId = new URLSearchParams(window.location.search).get("campaignId");
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/nav.js"></script>
+    <script>
+      FundFlowApi.requireRole("DONOR");
+      const campaignId = new URLSearchParams(window.location.search).get(
+        "campaignId",
+      );
 
-  async function init() {
-    const page = document.getElementById("page");
-    if (!campaignId) {
-      page.innerHTML = '<div class="ff-empty">No campaign specified.</div>';
-      return;
-    }
-    try {
-      const c = await FundFlowApi.get(`/campaigns/${campaignId}`);
-      page.innerHTML = `
+      async function init() {
+        const page = document.getElementById("page");
+        if (!campaignId) {
+          page.innerHTML = '<div class="ff-empty">No campaign specified.</div>';
+          return;
+        }
+        try {
+          const c = await FundFlowApi.get(`/campaigns/${campaignId}`);
+          page.innerHTML = `
         <h1 class="ff-display mb-2">Donate to</h1>
         <h4 class="mb-4">${c.title}</h4>
         <div id="formError" class="alert alert-danger d-none"></div>
@@ -58,37 +66,45 @@
         </form>
       `;
 
-      document.querySelectorAll(".quick-amt").forEach(btn =>
-        btn.addEventListener("click", () => { document.getElementById("amount").value = btn.dataset.amt; }));
+          document.querySelectorAll(".quick-amt").forEach((btn) =>
+            btn.addEventListener("click", () => {
+              document.getElementById("amount").value = btn.dataset.amt;
+            }),
+          );
 
-      document.getElementById("donateForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const errorBox = document.getElementById("formError");
-        errorBox.classList.add("d-none");
-        const payBtn = document.getElementById("payBtn");
-        payBtn.disabled = true;
-        payBtn.textContent = "Processing…";
-        try {
-          const result = await FundFlowApi.post("/donations", {
-            campaignId: parseInt(campaignId, 10),
-            amount: parseFloat(document.getElementById("amount").value),
-            paymentMethod: document.getElementById("method").value,
-          });
-          sessionStorage.setItem("ff_last_donation", JSON.stringify(result));
-          window.location.href = "result.html";
+          document
+            .getElementById("donateForm")
+            .addEventListener("submit", async (e) => {
+              e.preventDefault();
+              const errorBox = document.getElementById("formError");
+              errorBox.classList.add("d-none");
+              const payBtn = document.getElementById("payBtn");
+              payBtn.disabled = true;
+              payBtn.textContent = "Processing…";
+              try {
+                const result = await FundFlowApi.post("/donations", {
+                  campaignId: parseInt(campaignId, 10),
+                  amount: parseFloat(document.getElementById("amount").value),
+                  paymentMethod: document.getElementById("method").value,
+                });
+                sessionStorage.setItem(
+                  "ff_last_donation",
+                  JSON.stringify(result),
+                );
+                window.location.href = "result.html";
+              } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove("d-none");
+                payBtn.disabled = false;
+                payBtn.textContent = "Pay now";
+              }
+            });
         } catch (err) {
-          errorBox.textContent = err.message;
-          errorBox.classList.remove("d-none");
-          payBtn.disabled = false;
-          payBtn.textContent = "Pay now";
+          page.innerHTML = `<div class="ff-empty">${err.message}</div>`;
         }
-      });
-    } catch (err) {
-      page.innerHTML = `<div class="ff-empty">${err.message}</div>`;
-    }
-  }
+      }
 
-  init();
-</script>
-</body>
+      init();
+    </script>
+  </body>
 </html>

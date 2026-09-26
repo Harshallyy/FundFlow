@@ -3,7 +3,7 @@
    (set per-page: "" at the site root, "../" one folder deep) to build
    relative links/asset paths consistently regardless of folder depth. */
 
-const FF_API_BASE = "http://localhost:8080/api";
+const FF_API_BASE = window.FF_API_BASE || "http://localhost:8080/api";
 
 const FundFlowApi = {
   // ---- token/session storage ----
@@ -19,12 +19,15 @@ const FundFlowApi = {
   },
   setSession(authResponse) {
     localStorage.setItem("ff_token", authResponse.token);
-    localStorage.setItem("ff_user", JSON.stringify({
-      userId: authResponse.userId,
-      fullName: authResponse.fullName,
-      email: authResponse.email,
-      role: authResponse.role,
-    }));
+    localStorage.setItem(
+      "ff_user",
+      JSON.stringify({
+        userId: authResponse.userId,
+        fullName: authResponse.fullName,
+        email: authResponse.email,
+        role: authResponse.role,
+      }),
+    );
   },
   logout() {
     localStorage.removeItem("ff_token");
@@ -61,16 +64,25 @@ const FundFlowApi = {
         body: body ? JSON.stringify(body) : undefined,
       });
     } catch (networkErr) {
-      throw new Error("Could not reach the FundFlow server. Is the backend running on localhost:8080?");
+      throw new Error(
+        "Could not reach the FundFlow server. Is the backend running on localhost:8080?",
+      );
     }
 
     if (response.status === 204) return null;
 
     let data = null;
-    try { data = await response.json(); } catch (_) { /* empty body */ }
+    try {
+      data = await response.json();
+    } catch (_) {
+      /* empty body */
+    }
 
     if (!response.ok) {
-      const message = (data && data.message) ? data.message : ("Request failed (" + response.status + ")");
+      const message =
+        data && data.message
+          ? data.message
+          : "Request failed (" + response.status + ")";
       const err = new Error(message);
       err.status = response.status;
       err.fieldErrors = data ? data.fieldErrors : null;
@@ -79,8 +91,16 @@ const FundFlowApi = {
     return data;
   },
 
-  get(path) { return this.request(path, { method: "GET" }); },
-  post(path, body) { return this.request(path, { method: "POST", body }); },
-  put(path, body) { return this.request(path, { method: "PUT", body }); },
-  del(path) { return this.request(path, { method: "DELETE" }); },
+  get(path) {
+    return this.request(path, { method: "GET" });
+  },
+  post(path, body) {
+    return this.request(path, { method: "POST", body });
+  },
+  put(path, body) {
+    return this.request(path, { method: "PUT", body });
+  },
+  del(path) {
+    return this.request(path, { method: "DELETE" });
+  },
 };

@@ -45,12 +45,15 @@
 
   function accountLinks() {
     return `
-      <div class="dropdown d-inline-block ms-2 position-relative">
-        <button class="btn btn-ff-outline btn-sm position-relative" id="ffBellBtn" type="button">
-          🔔<span id="ffBellDot" class="ff-bell-dot d-none"></span>
+      <div class="dropdown d-inline-block ms-2 position-relative ff-notification-wrap">
+        <button class="btn btn-ff-outline btn-sm position-relative ff-notification-btn" id="ffBellBtn" type="button" aria-expanded="false" aria-controls="ffBellMenu">
+          <span aria-hidden="true">&#128276;</span><span class="ff-notification-label">Notifications</span><span id="ffBellDot" class="ff-bell-dot d-none"></span>
         </button>
-        <div id="ffBellMenu" class="dropdown-menu dropdown-menu-end p-2 d-none" style="width: 320px;">
-          <div id="ffBellList" class="small">Loading…</div>
+        <div id="ffBellMenu" class="dropdown-menu dropdown-menu-end p-2 d-none ff-notification-panel" role="dialog" aria-label="Notifications">
+          <div class="d-flex justify-content-between align-items-center px-2 pb-2">
+            <strong>Notifications</strong><span id="ffBellCount" class="text-secondary small"></span>
+          </div>
+          <div id="ffBellList" class="small" aria-live="polite">Loading…</div>
           <hr class="my-2">
           <a href="${base}notifications.html" class="small">View all</a>
         </div>
@@ -83,7 +86,9 @@
     </nav>
   `;
 
-  nav.querySelector(".navbar-nav").innerHTML = user ? roleLinks() : guestLinks();
+  nav.querySelector(".navbar-nav").innerHTML = user
+    ? roleLinks()
+    : guestLinks();
   if (user) {
     nav.querySelector(".ff-account-slot").innerHTML = accountLinks();
 
@@ -94,31 +99,64 @@
 
     const bellBtn = document.getElementById("ffBellBtn");
     const bellMenu = document.getElementById("ffBellMenu");
-    bellBtn.addEventListener("click", async () => {
-      bellMenu.classList.toggle("d-none");
-      if (bellMenu.classList.contains("d-none")) return;
+    function setBellOpen(open) {
+      bellMenu.classList.toggle("d-none", !open);
+      bellBtn.setAttribute("aria-expanded", String(open));
+    }
+
+    async function loadNotifications() {
+      const list = document.getElementById("ffBellList");
       try {
         const notifications = await FundFlowApi.get("/notifications");
-        const list = document.getElementById("ffBellList");
+        document.getElementById("ffBellCount").textContent =
+          notifications.length ? `${notifications.length} total` : "All clear";
+        list.replaceChildren();
         if (!notifications.length) {
-          list.innerHTML = '<p class="text-muted mb-0">No notifications yet.</p>';
-        } else {
-          list.innerHTML = notifications.slice(0, 6).map(n => `
-            <div class="mb-2 pb-2 border-bottom">
-              <div>${n.message}</div>
-              <div class="text-muted" style="font-size:.75rem">${new Date(n.createdAt).toLocaleString()}</div>
-            </div>
-          `).join("");
+          const empty = document.createElement("div");
+          empty.className = "ff-notification-empty";
+          empty.innerHTML =
+            '<span class="ff-empty-icon" aria-hidden="true">&#10003;</span><strong>No notifications for now</strong><span>You\'re all caught up.</span>';
+          list.appendChild(empty);
+          return notifications;
         }
+        notifications.slice(0, 6).forEach((n) => {
+          const item = document.createElement("div");
+          item.className = `ff-notification-item ${n.read ? "" : "is-unread"}`;
+          const message = document.createElement("div");
+          message.textContent = n.message;
+          const meta = document.createElement("div");
+          meta.className = "text-secondary";
+          meta.textContent = `${new Date(n.createdAt).toLocaleString()} · ${(n.type || "NOTICE").replaceAll("_", " ")}`;
+          item.append(message, meta);
+          list.appendChild(item);
+        });
+        return notifications;
       } catch (err) {
-        document.getElementById("ffBellList").innerHTML = '<p class="text-danger mb-0">Could not load notifications.</p>';
+        list.textContent = "Could not load notifications.";
+        return [];
       }
+    }
+
+    bellBtn.addEventListener("click", async () => {
+      const opening = bellMenu.classList.contains("d-none");
+      setBellOpen(opening);
+      if (!opening) return;
+      await loadNotifications();
+    });
+    document.addEventListener("click", (event) => {
+      if (!bellMenu.contains(event.target) && !bellBtn.contains(event.target))
+        setBellOpen(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setBellOpen(false);
     });
 
-    FundFlowApi.get("/notifications").then(notifications => {
-      if (notifications.some(n => !n.read)) {
-        document.getElementById("ffBellDot").classList.remove("d-none");
-      }
-    }).catch(() => {});
+    FundFlowApi.get("/notifications")
+      .then((notifications) => {
+        if (notifications.some((n) => !n.read)) {
+          document.getElementById("ffBellDot").classList.remove("d-none");
+        }
+      })
+      .catch(() => {});
   }
 })();
