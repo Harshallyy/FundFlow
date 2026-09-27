@@ -59,7 +59,7 @@
               (n) => `
         <div class="ff-card mb-2 p-3 d-flex justify-content-between align-items-start ${n.read ? "" : "border-2"}" style="${n.read ? "" : "border-color: var(--ff-brand);"}">
           <div>
-            <div>${escapeHtml(n.message)}</div>
+            <div>${escapeHtml(FundFlowApi.formatNotificationMessage(n.message))}</div>
             <div class="text-secondary small">${new Date(n.createdAt).toLocaleString()} · ${escapeHtml((n.type || "NOTICE").replaceAll("_", " "))}</div>
           </div>
           ${n.read ? "" : `<button class="btn btn-sm btn-ff-outline" onclick="markRead(${n.id})">Mark read</button>`}

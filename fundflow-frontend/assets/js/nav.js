@@ -46,8 +46,8 @@
   function accountLinks() {
     return `
       <div class="dropdown d-inline-block ms-2 position-relative ff-notification-wrap">
-        <button class="btn btn-ff-outline btn-sm position-relative ff-notification-btn" id="ffBellBtn" type="button" aria-expanded="false" aria-controls="ffBellMenu">
-          <span aria-hidden="true">&#128276;</span><span class="ff-notification-label">Notifications</span><span id="ffBellDot" class="ff-bell-dot d-none"></span>
+        <button class="btn btn-ff-outline btn-sm position-relative ff-notification-btn" id="ffBellBtn" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="ffBellMenu">
+          <svg class="ff-bell-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ff-notification-label">Notifications</span><span id="ffBellDot" class="ff-bell-dot d-none"></span>
         </button>
         <div id="ffBellMenu" class="dropdown-menu dropdown-menu-end p-2 d-none ff-notification-panel" role="dialog" aria-label="Notifications">
           <div class="d-flex justify-content-between align-items-center px-2 pb-2">
@@ -58,9 +58,9 @@
           <a href="${base}notifications.html" class="small">View all</a>
         </div>
       </div>
-      <div class="dropdown d-inline-block ms-2">
-        <button class="btn btn-ff-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">${user.fullName}</button>
-        <ul class="dropdown-menu dropdown-menu-end">
+      <div class="dropdown d-inline-block ms-2 ff-profile-dropdown">
+        <button class="btn btn-ff-outline btn-sm dropdown-toggle" id="ffProfileBtn" type="button" aria-expanded="false" aria-controls="ffProfileMenu">${user.fullName}</button>
+        <ul class="dropdown-menu dropdown-menu-end" id="ffProfileMenu">
           <li><a class="dropdown-item" href="${base}profile.html">Profile</a></li>
           <li><a class="dropdown-item" href="#" id="ffLogoutBtn">Log out</a></li>
         </ul>
@@ -75,7 +75,7 @@
     <nav class="navbar navbar-expand-lg ff-navbar py-2">
       <div class="container">
         <a class="navbar-brand" href="${base}index.html"><img src="${base}assets/logo/logo.svg" alt="FundFlow" height="28"></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ffNavCollapse">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ffNavCollapse" aria-controls="ffNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="ffNavCollapse">
@@ -89,6 +89,12 @@
   nav.querySelector(".navbar-nav").innerHTML = user
     ? roleLinks()
     : guestLinks();
+  nav.querySelectorAll(".navbar-nav a").forEach((link) => {
+    if (new URL(link.href).pathname === window.location.pathname) {
+      link.classList.add("active");
+      link.setAttribute("aria-current", "page");
+    }
+  });
   if (user) {
     nav.querySelector(".ff-account-slot").innerHTML = accountLinks();
 
@@ -99,15 +105,18 @@
 
     const bellBtn = document.getElementById("ffBellBtn");
     const bellMenu = document.getElementById("ffBellMenu");
+    let notificationRequest;
     function setBellOpen(open) {
       bellMenu.classList.toggle("d-none", !open);
+      bellMenu.classList.toggle("show", open);
       bellBtn.setAttribute("aria-expanded", String(open));
     }
 
     async function loadNotifications() {
       const list = document.getElementById("ffBellList");
       try {
-        const notifications = await FundFlowApi.get("/notifications");
+        notificationRequest ??= FundFlowApi.get("/notifications");
+        const notifications = await notificationRequest;
         document.getElementById("ffBellCount").textContent =
           notifications.length ? `${notifications.length} total` : "All clear";
         list.replaceChildren();
@@ -123,7 +132,9 @@
           const item = document.createElement("div");
           item.className = `ff-notification-item ${n.read ? "" : "is-unread"}`;
           const message = document.createElement("div");
-          message.textContent = n.message;
+          message.textContent = FundFlowApi.formatNotificationMessage(
+            n.message,
+          );
           const meta = document.createElement("div");
           meta.className = "text-secondary";
           meta.textContent = `${new Date(n.createdAt).toLocaleString()} · ${(n.type || "NOTICE").replaceAll("_", " ")}`;
@@ -132,6 +143,7 @@
         });
         return notifications;
       } catch (err) {
+        notificationRequest = null;
         list.textContent = "Could not load notifications.";
         return [];
       }
@@ -151,12 +163,52 @@
       if (event.key === "Escape") setBellOpen(false);
     });
 
-    FundFlowApi.get("/notifications")
+    loadNotifications()
       .then((notifications) => {
         if (notifications.some((n) => !n.read)) {
           document.getElementById("ffBellDot").classList.remove("d-none");
         }
       })
       .catch(() => {});
+
+    const profile = nav.querySelector(".ff-profile-dropdown");
+    const profileButton = document.getElementById("ffProfileBtn");
+    const profileMenu = document.getElementById("ffProfileMenu");
+    let profileCloseTimer;
+    let hoverOpenedProfile = false;
+    function setProfileOpen(open) {
+      profileMenu.classList.toggle("show", open);
+      profileButton.setAttribute("aria-expanded", String(open));
+    }
+    profileButton.addEventListener("click", () => {
+      if (hoverOpenedProfile) {
+        hoverOpenedProfile = false;
+        return;
+      }
+      setProfileOpen(!profileMenu.classList.contains("show"));
+    });
+    if (window.matchMedia("(hover: hover) and (min-width: 992px)").matches) {
+      profile.addEventListener("pointerenter", () => {
+        window.clearTimeout(profileCloseTimer);
+        hoverOpenedProfile = true;
+        setProfileOpen(true);
+      });
+      profile.addEventListener("pointerleave", () => {
+        hoverOpenedProfile = false;
+        profileCloseTimer = window.setTimeout(() => {
+          if (!profileMenu.contains(document.activeElement))
+            setProfileOpen(false);
+        }, 140);
+      });
+    }
+    document.addEventListener("click", (event) => {
+      if (!profile.contains(event.target)) setProfileOpen(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && profileMenu.classList.contains("show")) {
+        setProfileOpen(false);
+        profileButton.focus();
+      }
+    });
   }
 })();

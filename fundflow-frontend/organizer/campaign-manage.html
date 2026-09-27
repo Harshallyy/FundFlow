@@ -56,7 +56,7 @@
 
         <div id="tab-details">
           <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">$${c.currentAmount}</div><div class="ff-stat-label">raised</div></div></div>
+            <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${FundFlowApi.formatCurrency(c.currentAmount)}</div><div class="ff-stat-label">raised</div></div></div>
             <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.progressPercentage}%</div><div class="ff-stat-label">funded</div></div></div>
             <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.donorCount}</div><div class="ff-stat-label">donors</div></div></div>
             <div class="col-md-3"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.6rem">${c.daysRemaining}</div><div class="ff-stat-label">days left</div></div></div>
@@ -129,7 +129,7 @@
 
       function readOnlyDetails(c) {
         return `<p style="white-space: pre-line;">${c.description}</p>
-            <p class="text-secondary small">Target: $${c.targetAmount} · ${c.startDate} to ${c.endDate}</p>`;
+            <p class="text-secondary small">Target: ${FundFlowApi.formatCurrency(c.targetAmount)} · ${c.startDate} to ${c.endDate}</p>`;
       }
 
       function editForm(c) {
@@ -195,7 +195,7 @@
               .map(
                 (d) => `
               <tr>
-                <td>$${d.amount}</td>
+                <td>${FundFlowApi.formatCurrency(d.amount)}</td>
                 <td><span class="ff-pill ff-pill-${d.status.toLowerCase()}">${d.status}</span></td>
                 <td class="text-secondary small">${d.transactionRef || "—"}</td>
                 <td class="text-secondary small">${new Date(d.createdAt).toLocaleString()}</td>

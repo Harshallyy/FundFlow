@@ -38,7 +38,7 @@
         <dl class="row mb-0">
           <dt class="col-4">Name</dt><dd class="col-8">${u.fullName}</dd>
           <dt class="col-4">Email</dt><dd class="col-8">${u.email}</dd>
-          <dt class="col-4">Role</dt><dd class="col-8"><span class="ff-pill ff-pill-approved">${u.role.replace("ROLE_", "")}</span></dd>
+          <dt class="col-4">Role</dt><dd class="col-8"><span class="ff-pill ff-pill-role">${u.role.replace("ROLE_", "")}</span></dd>
           <dt class="col-4">Member since</dt><dd class="col-8">${new Date(u.createdAt).toLocaleDateString()}</dd>
         </dl>
       `;

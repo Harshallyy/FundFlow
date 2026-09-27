@@ -107,11 +107,11 @@
             <div class="ff-card h-100">
               <img src="${c.imagePath || "/assets/images/campaign-placeholder-default.svg"}" alt="">
               <div class="ff-card-body">
-                <span class="ff-pill ff-pill-approved mb-2 d-inline-block">${c.category || "General"}</span>
+                <span class="ff-pill ff-pill-category mb-2 d-inline-block">${c.category || "General"}</span>
                 <div><strong>${c.title}</strong></div>
                 <div class="ff-progress my-2"><span style="width:${c.progressPercentage}%"></span></div>
                 <div class="d-flex justify-content-between text-secondary small">
-                  <span>$${c.currentAmount} of $${c.targetAmount}</span>
+                  <span>${FundFlowApi.formatCurrency(c.currentAmount)} of ${FundFlowApi.formatCurrency(c.targetAmount)}</span>
                   <span>${c.daysRemaining}d left</span>
                 </div>
               </div>

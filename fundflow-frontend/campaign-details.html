@@ -101,7 +101,7 @@
         <div class="row g-5">
           <div class="col-lg-7">
             ${ownerActions}
-            <span class="ff-pill ff-pill-approved mb-2 d-inline-block">${c.category || "General"}</span>
+            <span class="ff-pill ff-pill-category mb-2 d-inline-block">${c.category || "General"}</span>
             <h1 class="ff-display">${c.title}</h1>
             <img src="${c.imagePath || "/assets/images/campaign-placeholder-default.svg"}" class="w-100 rounded mb-4" style="max-height:320px;object-fit:cover;">
             <h5>About this campaign</h5>
@@ -129,8 +129,8 @@
             <div class="ff-card p-4">
               <div class="ff-progress mb-2"><span style="width:${c.progressPercentage}%"></span></div>
               <div class="d-flex justify-content-between mb-3">
-                <strong>$${c.currentAmount} raised</strong>
-                <span class="text-secondary">of $${c.targetAmount}</span>
+                <strong>${FundFlowApi.formatCurrency(c.currentAmount)} raised</strong>
+                <span class="text-secondary">of ${FundFlowApi.formatCurrency(c.targetAmount)}</span>
               </div>
               <div class="row text-center mb-3">
                 <div class="col-4"><div class="fw-bold">${c.progressPercentage}%</div><div class="small text-secondary">funded</div></div>

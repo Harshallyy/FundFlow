@@ -45,7 +45,7 @@
                 (d) => `
               <tr>
                 <td><a href="../campaign-details.html?id=${d.campaignId}">${d.campaignTitle}</a></td>
-                <td>$${d.amount}</td>
+                <td>${FundFlowApi.formatCurrency(d.amount)}</td>
                 <td><span class="ff-pill ff-pill-${d.status.toLowerCase()}">${d.status}</span></td>
                 <td class="text-secondary small">${d.transactionRef || "—"}</td>
                 <td class="text-secondary small">${new Date(d.createdAt).toLocaleString()}</td>

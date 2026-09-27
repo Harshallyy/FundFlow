@@ -71,7 +71,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <a href="../campaign-details.html?id=${c.id}">${c.title}</a>
-              <div class="text-secondary small">${c.category || "General"} · $${c.currentAmount} of $${c.targetAmount}</div>
+              <div class="text-secondary small">${c.category || "General"} · ${FundFlowApi.formatCurrency(c.currentAmount)} of ${FundFlowApi.formatCurrency(c.targetAmount)}</div>
             </div>
             <span class="${pillClass(c.status)}">${c.status}</span>
           </div>

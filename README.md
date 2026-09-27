@@ -1,218 +1,71 @@
 # FundFlow
 
-A fundraising platform built as a resume/portfolio project: donors discover and support
-campaigns, organizers create and manage campaigns, and admins verify campaigns before they
-go live. Built with Java/Spring Boot on the backend and plain HTML/CSS/JS + Bootstrap on the
-frontend, running entirely on localhost.
+FundFlow is an India-focused fundraising demo built with Java 21, Spring Boot, Oracle, and a lightweight static frontend. Donors can support reviewed campaigns, organizers can manage fundraisers, and admins control campaign approval.
 
-## Features
+## Purpose and features
 
-- **3 roles**: Donor, Organizer, Admin — each with their own dashboard and permissions
-- **Campaign verification workflow**: DRAFT → PENDING → APPROVED / REJECTED / BLOCKED → COMPLETED
-- **Mock donation & payment flow**: donate → mock payment gateway → transaction ledger →
-  campaign total updated → in-app notifications. No real money moves; architecture keeps a
-  clean `PaymentService` interface so a real gateway (e.g. Razorpay) can be added later
-  without touching the rest of the app.
-- **In-app notifications** for donors, organizers, and admins, plus an optional Resend email to admins when a campaign is submitted
-- **Two AI features** (Spring AI + local Ollama model, no paid API):
-  - AI campaign description generator (organizer-only, never auto-publishes)
-  - FundFlow help assistant (answers "how do I donate", "what does approval mean", etc.)
-- **JWT authentication** with Spring Security, role-based route protection
-- Local SVG placeholder assets throughout — nothing depends on external image URLs
+The project demonstrates a straightforward, role-based fundraising workflow with INR display, campaign progress, saved campaigns, donation history, mock payments, and in-app notifications. Campaign review emails to admins are optional. Four approved sample campaigns are seeded locally when no approved campaigns exist and demo mode is enabled.
 
-## Tech stack
+## Roles and core flow
 
-| Layer    | Technology                                                                         |
-| -------- | ---------------------------------------------------------------------------------- |
-| Backend  | Java 21, Spring Boot 3.3.4, Spring Security, JWT (jjwt), Spring Data JPA/Hibernate |
-| Database | Oracle XE                                                                          |
-| AI       | Spring AI + Ollama (local model, e.g. Mistral)                                     |
-| Frontend | HTML, CSS, JavaScript, Bootstrap 5 (via CDN)                                       |
-| Build    | Maven                                                                              |
-| Payments | Mock only (`MockPaymentService`) — no Razorpay yet                                 |
+- **Donor:** explore and save approved campaigns, make a mock donation, and review donation history.
+- **Organizer:** create a draft, submit it for review, and manage approved campaign updates.
+- **Admin:** approve, reject, or block submitted campaigns and view platform activity.
 
-## Project structure
+Donations use a mock payment result; no real payment is processed. Campaign totals update through the existing backend records.
 
-```
-fundflow-backend/
-  src/main/java/com/fundflow/
-    config/        SecurityConfig, AiConfig, DataSeeder (creates default admin)
-    controller/    REST controllers (Auth, Campaign, Donation, SavedCampaign,
-                   Notification, User, Admin, Organizer, Ai)
-    service/       Interfaces + impl/ for all business logic
-    repository/    Spring Data JPA repositories
-    entity/        JPA entities (User, Role, Campaign, Donation, Payment,
-                   TransactionLog, Notification, CampaignUpdate, SavedCampaign, ...)
-    dto/           Request/response DTOs, grouped by domain
-    security/      JWT filter, JwtUtil, CustomUserDetails(Service)
-    exception/     Custom exceptions + GlobalExceptionHandler
-    payment/       PaymentService interface + MockPaymentServiceImpl
-    ai/            CampaignDescriptionAiService, AssistantAiService
-  src/main/resources/
-    application.yml
-    db/schema.sql  Oracle DDL + role seed data
-  src/test/java/   Unit tests (Mockito, no DB required)
+## Architecture and technology
 
-fundflow-frontend/
-  index.html, explore.html, campaign-details.html, about.html, login.html,
-  register.html, notifications.html, profile.html
-  donor/           dashboard, donations, saved
-  organizer/       dashboard, campaigns, create-campaign, campaign-manage
-  admin/           dashboard, campaigns (verification+management), users, donations
-  payment/         donate, result (receipt)
-  ai/              assistant
-  assets/
-    css/style.css  design system
-    js/api.js      fetch wrapper + JWT/session handling
-    js/nav.js      shared role-aware navbar + notification bell
-    images/        local SVG campaign placeholders
-    logo/logo.svg  single swappable logo file
-```
+The backend uses Spring Boot REST controllers, Spring Security with JWT, service-layer business logic, Spring Data JPA, and Oracle Database. The frontend is a responsive multi-page HTML/CSS/JavaScript app using Bootstrap and a shared API helper. This keeps the codebase small and easy to follow.
+
+The existing Oracle schema includes users, roles, campaigns, donations, payments, notifications, saved campaigns, transaction logs, updates, and campaign documents. Apply `fundflow-backend/src/main/resources/db/schema.sql` to the Oracle database before starting the backend; Hibernate validates the schema rather than creating it.
+
+**Tech stack:** Java 21, Spring Boot 3.3.4, Spring Security/JWT, Spring Data JPA/Hibernate, Oracle, Maven, HTML, CSS, JavaScript, and Bootstrap 5.
+
+## AI and email
+
+The app includes a campaign-description helper and a FundFlow help assistant. Admin campaign-review emails are sent through Resend when its sender and API key are configured. Both integrations are optional to the core fundraising flow.
 
 ## Setup
 
-### 1. Prerequisites
+Prerequisites: JDK 21, Maven, Oracle Database, and Python for serving the static frontend.
 
-- JDK 21
-- Maven (or use the included setup once you have Java — Maven Wrapper isn't included, install Maven separately)
-- Oracle Database XE (any recent version with pluggable DB support)
-- [Ollama](https://ollama.com) installed locally, for the AI features
+In PowerShell, configure the local backend environment:
 
-### 2. Oracle setup
+```powershell
+$env:DB_USERNAME = "fundflow_user"
+$env:DB_PASSWORD = "your-database-password"
+$env:JWT_SECRET = "a-long-random-secret"
+$env:ADMIN_EMAIL = "admin@fundflow.local"
+$env:ADMIN_PASSWORD = "your-local-admin-password"
+$env:APP_DEMO_ENABLED = "true"
+```
 
-1. Install Oracle XE and make sure it's running on `localhost:1521` (default).
-2. Create a dedicated schema/user for the app, e.g.:
-   ```sql
-   CREATE USER fundflow_user IDENTIFIED BY your_password;
-   GRANT CONNECT, RESOURCE, DBA TO fundflow_user; -- DBA is generous; scope down for anything beyond local dev
-   ALTER USER fundflow_user QUOTA UNLIMITED ON USERS;
-   ```
-3. Connect as `fundflow_user` and run `fundflow-backend/src/main/resources/db/schema.sql`
-   — this creates all tables and seeds the three roles (`ROLE_DONOR`, `ROLE_ORGANIZER`, `ROLE_ADMIN`).
-4. Update `application.yml`'s datasource URL if your service name isn't `XEPDB1`.
+Optional email settings: `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
 
-### 3. Ollama + Mistral setup
+Run the backend from `fundflow-backend`:
 
-1. Install Ollama: https://ollama.com/download
-2. Pull the model:
-   ```
-   ollama pull mistral
-   ```
-3. Make sure Ollama is running (it usually starts a background service on `localhost:11434`
-   automatically after install; otherwise run `ollama serve`).
-4. The AI features (description generator, help assistant) will fail gracefully with an
-   error message in the UI if Ollama isn't running — everything else in the app works fine
-   without it.
-
-### 4. Backend
-
-```bash
-cd fundflow-backend
-
-# set these before running, or edit application.yml directly
-export DB_USERNAME=fundflow_user
-export DB_PASSWORD=your_password
-export JWT_SECRET=some-long-random-string-at-least-32-chars
-export ADMIN_EMAIL=admin@fundflow.local
-export ADMIN_PASSWORD=Admin@12345
-export RESEND_API_KEY=re_...
-export RESEND_FROM_EMAIL="FundFlow <no-reply@your-verified-domain.example>"
-export APP_DEMO_ENABLED=true
-
+```powershell
+mvn clean test
 mvn spring-boot:run
 ```
 
-The API starts on `http://localhost:8080`. On first startup, `DataSeeder` automatically
-creates the admin account above (only if no admin exists yet — safe to leave running).
+Serve the frontend from `fundflow-frontend` in another terminal:
 
-`RESEND_API_KEY` and `RESEND_FROM_EMAIL` are optional for local development. When both are
-set, Resend sends a simple campaign-review email to every existing `ROLE_ADMIN` user after
-submission. Email failures are logged and never roll back the campaign or in-app notification.
-
-When `APP_DEMO_ENABLED=true` and no approved campaigns exist, startup seeds four clearly
-identified local demo campaigns and a `demo.organizer@fundflow.local` organizer account
-(password `Demo@12345`). Set `APP_DEMO_ENABLED=false` to disable this seeding. Existing
-campaign data is never replaced or reset.
-
-**Note on Spring AI dependency:** this project uses `spring-ai-bom`/`spring-ai-starter-model-ollama`
-version `1.0.0`. I couldn't verify this exact coordinate against Maven Central from the
-environment I built this in — if `mvn compile` complains about resolving it, check
-https://mvnrepository.com/artifact/org.springframework.ai for the current artifact name and
-latest version, and update the `spring-ai.version` property and/or artifact id in `pom.xml`.
-
-### 5. Frontend
-
-No build step — it's static HTML/CSS/JS. Just serve the folder so relative paths and CORS
-work correctly (opening the file directly via `file://` will break API calls):
-
-```bash
-cd fundflow-frontend
-python3 -m http.server 5500
+```powershell
+py -m http.server 5500
 ```
 
-Then open `http://localhost:5500`. (Any static server works — VS Code's Live Server
-extension, `npx serve`, etc.)
+Open `http://localhost:5500`; the backend uses `http://localhost:8080` by default.
 
-For a different backend host, set `window.FF_API_BASE` before loading `assets/js/api.js`.
-The default remains `http://localhost:8080/api` for local development.
+## Environment variables
 
-## Test credentials
+`DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `APP_DEMO_ENABLED` configure the database, token signing, admin seed, and demo data. `RESEND_API_KEY` and `RESEND_FROM_EMAIL` enable review emails.
 
-| Role      | Email                  | Password        | How to get it                                                                                 |
-| --------- | ---------------------- | --------------- | --------------------------------------------------------------------------------------------- |
-| Admin     | `admin@fundflow.local` | `Admin@12345`   | Auto-created on first backend startup (or whatever you set `ADMIN_EMAIL`/`ADMIN_PASSWORD` to) |
-| Donor     | _(your choice)_        | _(your choice)_ | Register via the UI, choose "Donate to campaigns"                                             |
-| Organizer | _(your choice)_        | _(your choice)_ | Register via the UI, choose "Start a campaign"                                                |
+## SEO, responsiveness, and performance
 
-## Main API endpoints
+Public pages include page titles and metadata; account and dashboard pages are marked `noindex`. Before deployment, replace the local URLs in `fundflow-frontend/robots.txt` and `fundflow-frontend/sitemap.xml` with the public site URL. The frontend uses local assets, CSS transitions, and no heavy client framework.
 
-| Method          | Path                                         | Access                                            |
-| --------------- | -------------------------------------------- | ------------------------------------------------- |
-| POST            | `/api/auth/register`                         | Public                                            |
-| POST            | `/api/auth/login`                            | Public                                            |
-| GET             | `/api/campaigns/explore`                     | Public                                            |
-| GET             | `/api/campaigns/{id}`                        | Public (non-approved only visible to owner/admin) |
-| POST            | `/api/campaigns`                             | Organizer                                         |
-| PUT             | `/api/campaigns/{id}`                        | Organizer (own, DRAFT/REJECTED only)              |
-| POST            | `/api/campaigns/{id}/submit`                 | Organizer                                         |
-| POST            | `/api/campaigns/{id}/review`                 | Admin (APPROVE/REJECT/BLOCK)                      |
-| POST            | `/api/campaigns/{id}/complete`               | Admin                                             |
-| GET             | `/api/campaigns/mine`                        | Organizer                                         |
-| GET             | `/api/campaigns/admin` / `/admin/pending`    | Admin                                             |
-| POST            | `/api/donations`                             | Donor                                             |
-| GET             | `/api/donations/my` / `/stats`               | Donor                                             |
-| GET             | `/api/donations/campaign/{id}`               | Organizer (own) / Admin                           |
-| GET             | `/api/admin/users` / `/stats` / `/donations` | Admin                                             |
-| GET/POST/DELETE | `/api/saved-campaigns`                       | Donor                                             |
-| GET/PUT         | `/api/notifications`                         | Any authenticated user                            |
-| POST            | `/api/ai/generate-description`               | Organizer                                         |
-| POST            | `/api/ai/assistant`                          | Public                                            |
+## Future scope
 
-## Known issues / limitations
-
-- **Spring AI dependency coordinates are unverified** (see setup note above) — I don't have
-  Maven Central access in the environment I built this in.
-- **No integration/controller tests** — unit tests cover service-layer business logic
-  (Mockito, no DB), but there are no `@SpringBootTest`/`@WebMvcTest` tests, since those would
-  need a live Oracle connection to run reliably.
-- **No campaign image upload** — organizers pick from a small set of local placeholder
-  images via dropdown; there's no file upload endpoint.
-- **No pagination** — list endpoints (explore, admin lists, donation history) return
-  everything at once. Fine for a demo dataset, would need pagination at real scale.
-- **Frontend has no build step / bundler** — plain multi-page HTML on purpose, to keep it
-  simple to explain; this means some markup repeats across pages instead of using shared
-  components.
-- **CORS is wide open to localhost** for local dev convenience — tighten before any real
-  deployment.
-- **No password reset / email verification flow** — out of scope for this version.
-- I could not run a real `mvn compile` end-to-end in the environment I built this in (no
-  Maven Central access), so while I did a careful manual/static review, please treat your
-  first local build as the real compilation check.
-
-## Future work
-
-- Real Razorpay integration (architecture already separates `PaymentService` from
-  `Donation`/`Transaction` to make this a clean swap)
-- Campaign image upload
-- Pagination and search improvements
-- Email notifications alongside in-app ones
+Potential extensions include a real payment provider, campaign image uploads, and expanded search and pagination.

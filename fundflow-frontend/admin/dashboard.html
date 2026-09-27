@@ -45,7 +45,7 @@
         <div class="col-md-2"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.7rem">${s.pendingCampaigns}</div><div class="ff-stat-label">pending</div></div></div>
         <div class="col-md-2"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.7rem">${s.approvedCampaigns}</div><div class="ff-stat-label">approved</div></div></div>
         <div class="col-md-2"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.7rem">${s.totalSuccessfulDonations}</div><div class="ff-stat-label">donations</div></div></div>
-        <div class="col-md-2"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.7rem">$${s.totalTransactionAmount}</div><div class="ff-stat-label">raised platform-wide</div></div></div>
+        <div class="col-md-2"><div class="ff-card p-3 text-center"><div class="ff-stat-num" style="font-size:1.7rem">${FundFlowApi.formatCurrency(s.totalTransactionAmount)}</div><div class="ff-stat-label">raised platform-wide</div></div></div>
       `;
 
           const pending = await FundFlowApi.get("/campaigns/admin/pending");

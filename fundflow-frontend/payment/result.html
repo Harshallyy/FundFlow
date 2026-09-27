@@ -59,7 +59,7 @@
       <div class="ff-card p-4">
         <dl class="row mb-0">
           <dt class="col-5">Campaign</dt><dd class="col-7"><a href="../campaign-details.html?id=${d.campaignId}">${d.campaignTitle}</a></dd>
-          <dt class="col-5">Amount</dt><dd class="col-7">$${d.amount}</dd>
+          <dt class="col-5">Amount</dt><dd class="col-7">${FundFlowApi.formatCurrency(d.amount)}</dd>
           <dt class="col-5">Payment reference</dt><dd class="col-7">${d.mockReference || "—"}</dd>
           <dt class="col-5">Transaction ref</dt><dd class="col-7">${d.transactionRef || "—"}</dd>
           <dt class="col-5">Date</dt><dd class="col-7">${new Date(d.createdAt).toLocaleString()}</dd>
@@ -76,7 +76,7 @@
             document.getElementById("campaignImpact").innerHTML = `
             <strong>${campaign.progressPercentage}% funded</strong>
             <div class="ff-progress my-2"><span style="width:${campaign.progressPercentage}%"></span></div>
-            <div class="text-secondary small">$${campaign.currentAmount} raised · ${campaign.donorCount} supporters</div>
+            <div class="text-secondary small">${FundFlowApi.formatCurrency(campaign.currentAmount)} raised · ${campaign.donorCount} supporters</div>
             ${d.status === "SUCCESS" ? '<div class="text-secondary small mt-2">Your contribution is included in this campaign total.</div>' : ""}`;
           })
           .catch(() => {

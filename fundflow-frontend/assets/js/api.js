@@ -6,6 +6,19 @@
 const FF_API_BASE = window.FF_API_BASE || "http://localhost:8080/api";
 
 const FundFlowApi = {
+  formatCurrency(amount) {
+    const value = Number(amount);
+    if (!Number.isFinite(value)) return "₹0";
+    return `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value)}`;
+  },
+  formatNotificationMessage(message) {
+    return String(message ?? "").replace(
+      /(donation of )([\d,]+(?:\.\d+)?)/gi,
+      (_, prefix, amount) =>
+        prefix + this.formatCurrency(amount.replaceAll(",", "")),
+    );
+  },
+
   // ---- token/session storage ----
   getToken() {
     return localStorage.getItem("ff_token");

@@ -51,7 +51,7 @@
             <img src="${c.imagePath || "/assets/images/campaign-placeholder-default.svg"}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;">
             <div>
               <a href="campaign-manage.html?id=${c.id}">${c.title}</a>
-              <div class="text-secondary small">$${c.currentAmount} of $${c.targetAmount} · ${c.progressPercentage}% funded</div>
+              <div class="text-secondary small">${FundFlowApi.formatCurrency(c.currentAmount)} of ${FundFlowApi.formatCurrency(c.targetAmount)} · ${c.progressPercentage}% funded</div>
             </div>
           </div>
           <div class="text-end">

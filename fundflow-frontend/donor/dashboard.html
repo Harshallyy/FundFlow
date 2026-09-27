@@ -38,7 +38,7 @@
         try {
           const stats = await FundFlowApi.get("/donations/stats");
           document.getElementById("stats").innerHTML = `
-        <div class="col-md-4"><div class="ff-card p-3 text-center"><div class="ff-stat-num">$${stats.totalDonated}</div><div class="ff-stat-label">total donated</div></div></div>
+        <div class="col-md-4"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${FundFlowApi.formatCurrency(stats.totalDonated)}</div><div class="ff-stat-label">total donated</div></div></div>
         <div class="col-md-4"><div class="ff-card p-3 text-center"><div class="ff-stat-num">${stats.donationCount}</div><div class="ff-stat-label">successful donations</div></div></div>
         <div class="col-md-4"><div class="ff-card p-3 text-center"><a class="ff-stat-num d-block" href="../explore.html">Give →</a><div class="ff-stat-label">find a new campaign</div></div></div>
       `;
@@ -57,7 +57,7 @@
               <div class="text-secondary small">${new Date(d.createdAt).toLocaleDateString()}</div>
             </div>
             <div class="text-end">
-              <div>$${d.amount}</div>
+              <div>${FundFlowApi.formatCurrency(d.amount)}</div>
               <span class="ff-pill ff-pill-${d.status.toLowerCase()}">${d.status}</span>
             </div>
           </div>
